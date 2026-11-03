@@ -1,9 +1,4 @@
-
 import './scss/styles.scss';
-
-// =====================================
-// 1. Импорты
-// =====================================
 
 import { Api } from './components/base/Api';
 import { EventEmitter } from './components/base/Events';
@@ -25,34 +20,93 @@ import { ContactsForm } from './components/View/ContactsForm';
 
 import { cloneTemplate } from './utils/utils';
 import { API_URL } from './utils/constants';
+import { apiProducts } from './utils/data';
 
 import { IProduct, IOrder, TPayment } from './types';
 
-
-// =====================================
-// 2. Инициализация основных объектов
-// =====================================
-
-// Брокер событий
+// Инициализация основных объектов
 const events = new EventEmitter();
 
-// Модели данных
-const catalog = new CatalogModel(events);
-const basket = new BasketModel(events);
-const buyer = new BuyerModel(events);
+const catalog = new CatalogModel();
+const basket = new BasketModel();
+const buyer = new BuyerModel();
 
-// API
 const api = new Api(API_URL);
 const apiService = new ApiService(api);
 
+// Проверка методов моделей
+function testModels(): void {
+    console.log('========== ТЕСТИРОВАНИЕ МОДЕЛЕЙ ==========');
 
-// =====================================
-// 3. Получение HTML-элементов
-// =====================================
+    const testCatalog = new CatalogModel();
 
-function getRequiredElement<T extends HTMLElement>(
-    selector: string
-): T {
+    console.log('--- CatalogModel ---');
+
+    testCatalog.saveProducts(apiProducts.items);
+    console.log('Все товары:', testCatalog.getProducts());
+
+    console.log(
+        'Найденный товар:',
+        testCatalog.findProduct(apiProducts.items[0].id)
+    );
+
+    testCatalog.chooseProduct(apiProducts.items[0]);
+    console.log('Выбранный товар:', testCatalog.getChosenProduct());
+
+    testCatalog.chooseProduct(null);
+    console.log('Выбранный товар после очистки:', testCatalog.getChosenProduct());
+
+    const testBasket = new BasketModel();
+
+    console.log('--- BasketModel ---');
+
+    testBasket.addProduct(apiProducts.items[0]);
+    testBasket.addProduct(apiProducts.items[1]);
+
+    console.log('Товары корзины:', testBasket.getProducts());
+    console.log('Есть первый товар:', testBasket.hasProduct(apiProducts.items[0].id));
+    console.log('Общая стоимость:', testBasket.getTotalPrice());
+    console.log('Количество товаров:', testBasket.getProductCount());
+
+    testBasket.addProduct(apiProducts.items[0]);
+    console.log('Количество после повторного добавления:', testBasket.getProductCount());
+
+    testBasket.removeProduct(apiProducts.items[0].id);
+    console.log('Корзина после удаления:', testBasket.getProducts());
+
+    testBasket.clearBasket();
+    console.log('Корзина после очистки:', testBasket.getProducts());
+
+    const testBuyer = new BuyerModel();
+
+    console.log('--- BuyerModel ---');
+
+    console.log('Ошибки пустых данных:', testBuyer.validateBuyerData());
+
+    testBuyer.updateBuyerData({
+        payment: TPayment.CARD,
+        address: 'Тестовая улица, 10',
+        email: 'test@example.com',
+        phone: '+375291234567'
+    });
+
+    console.log('Данные покупателя:', testBuyer.getBuyerData());
+    console.log('Ошибки заполненных данных:', testBuyer.validateBuyerData());
+
+    testBuyer.updateBuyerData({
+        address: 'Новый тестовый адрес, 15'
+    });
+
+    console.log('Данные после частичного обновления:', testBuyer.getBuyerData());
+
+    testBuyer.clearBuyerData();
+    console.log('Данные после очистки:', testBuyer.getBuyerData());
+
+    console.log('========== ТЕСТИРОВАНИЕ ЗАВЕРШЕНО ==========');
+}
+
+// Получение обязательного HTML-элемента
+function getRequiredElement<T extends HTMLElement>(selector: string): T {
     const element = document.querySelector<T>(selector);
 
     if (!element) {
@@ -62,7 +116,6 @@ function getRequiredElement<T extends HTMLElement>(
     return element;
 }
 
-// Основные элементы страницы
 const galleryElement = getRequiredElement<HTMLElement>('.gallery');
 const modalElement = getRequiredElement<HTMLElement>('#modal-container');
 
@@ -74,25 +127,18 @@ const basketButton = getRequiredElement<HTMLButtonElement>(
     '.header__basket'
 );
 
-// Представления
 const gallery = new Gallery(galleryElement);
 const modal = new Modal(events, modalElement);
 
-// Текущие формы
 let orderForm: OrderForm | null = null;
 let contactsForm: ContactsForm | null = null;
-
-
-// =====================================
-// 4. Вспомогательные функции
-// =====================================
 
 // Обновление счётчика корзины
 function updateBasketCounter(): void {
     basketCounter.textContent = String(basket.getProductCount());
 }
 
-// Отображение успешного заказа
+// Отображение результата успешного заказа
 function showSuccess(total: number): void {
     const successElement = cloneTemplate<HTMLElement>('#success');
 
@@ -118,12 +164,7 @@ function showSuccess(total: number): void {
     modal.open();
 }
 
-
-// =====================================
-// 5. Работа с каталогом
-// =====================================
-
-// Создание и отображение карточек товаров
+// Отображение каталога
 function renderCatalog(products: IProduct[]): void {
     const cards = products.map((product) => {
         const cardElement = cloneTemplate<HTMLElement>('#card-catalog');
@@ -145,27 +186,19 @@ function renderCatalog(products: IProduct[]): void {
     gallery.catalog = cards;
 }
 
-
-// =====================================
-// 6. Просмотр карточки товара
-// =====================================
-
+// Открытие карточки товара
 function openPreview(product: IProduct): void {
-    // Сохраняем выбранный товар в модели
     catalog.chooseProduct(product);
 
-    // Создаём карточку предпросмотра
     const previewElement = cloneTemplate<HTMLElement>('#card-preview');
     const preview = new CardPreview(events, previewElement);
 
-    // Заполняем информацию о товаре
     preview.title = product.title;
     preview.price = product.price;
     preview.category = product.category;
     preview.image = product.image;
     preview.description = product.description;
 
-    // Проверяем доступность и наличие товара в корзине
     const alreadyInBasket = basket.hasProduct(product.id);
 
     if (product.price === null) {
@@ -183,12 +216,7 @@ function openPreview(product: IProduct): void {
     modal.open();
 }
 
-
-// =====================================
-// 7. Работа с корзиной
-// =====================================
-
-// Создание и отображение корзины
+// Отображение корзины
 function openBasket(): void {
     const basketElement = cloneTemplate<HTMLElement>('#basket');
 
@@ -206,6 +234,7 @@ function openBasket(): void {
 
         const item = new BasketItem(itemElement, () => {
             basket.removeProduct(product.id);
+            updateBasketCounter();
             openBasket();
         });
 
@@ -223,12 +252,7 @@ function openBasket(): void {
     modal.open();
 }
 
-
-// =====================================
-// 8. Оформление заказа
-// =====================================
-
-// Открытие первой формы: способ оплаты и адрес
+// Открытие формы оплаты и адреса
 function openOrder(): void {
     const orderElement = cloneTemplate<HTMLFormElement>('#order');
 
@@ -236,7 +260,6 @@ function openOrder(): void {
 
     const buyerData = buyer.getBuyerData();
 
-    // Восстанавливаем ранее введённые данные
     if (buyerData.payment) {
         orderForm.payment = buyerData.payment;
     }
@@ -247,8 +270,7 @@ function openOrder(): void {
     modal.open();
 }
 
-
-// Открытие второй формы: email и телефон
+// Открытие формы контактных данных
 function openContacts(): void {
     const errors = buyer.validateBuyerData();
 
@@ -278,15 +300,9 @@ function openContacts(): void {
     modal.open();
 }
 
-
-// =====================================
-// 9. Отправка заказа
-// =====================================
-
+// Проверка данных и отправка заказа
 async function submitOrder(): Promise<void> {
-    // Проверяем данные покупателя
     const errors = buyer.validateBuyerData();
-
     const errorMessages = Object.values(errors).filter(Boolean);
 
     if (errorMessages.length > 0) {
@@ -299,7 +315,6 @@ async function submitOrder(): Promise<void> {
 
     const buyerData = buyer.getBuyerData();
 
-    // Дополнительная проверка обязательных данных
     if (
         !buyerData.payment ||
         !buyerData.address ||
@@ -313,7 +328,6 @@ async function submitOrder(): Promise<void> {
         return;
     }
 
-    // Проверяем, что корзина не пуста
     if (basket.getProductCount() === 0) {
         if (contactsForm) {
             contactsForm.errors = 'Корзина пуста';
@@ -322,7 +336,6 @@ async function submitOrder(): Promise<void> {
         return;
     }
 
-    // Формируем объект заказа
     const order: IOrder = {
         payment: buyerData.payment,
         address: buyerData.address,
@@ -333,22 +346,18 @@ async function submitOrder(): Promise<void> {
     };
 
     try {
-        // Отправляем заказ на сервер
         const response = await apiService.createOrder(order);
 
-        // Очищаем данные после успешного оформления
         basket.clearBasket();
         buyer.clearBuyerData();
+        updateBasketCounter();
 
-        // Сбрасываем ссылки на формы
         orderForm = null;
         contactsForm = null;
 
-        // Показываем результат оформления
         showSuccess(response.total);
 
         console.log('Заказ успешно оформлен:', response);
-
     } catch (error: unknown) {
         console.error('Ошибка оформления заказа:', error);
 
@@ -359,30 +368,11 @@ async function submitOrder(): Promise<void> {
     }
 }
 
-
-// =====================================
-// 10. Обработчики событий
-// =====================================
-
-// Закрытие модального окна
+// Обработчики событий интерфейса
 events.on('modal:close', () => {
     modal.close();
 });
 
-
-// Обновление каталога после загрузки товаров
-events.on('catalog:changed', () => {
-    renderCatalog(catalog.getProducts());
-});
-
-
-// Обновление счётчика корзины
-events.on('basket:changed', () => {
-    updateBasketCounter();
-});
-
-
-// Добавление или удаление товара из корзины
 events.on('preview:button-click', () => {
     const product = catalog.getChosenProduct();
 
@@ -396,77 +386,55 @@ events.on('preview:button-click', () => {
         basket.addProduct(product);
     }
 
+    updateBasketCounter();
     modal.close();
 });
 
-
-// Изменение способа оплаты
 events.on('order:payment-change', (data: { payment: TPayment }) => {
     buyer.updateBuyerData({
         payment: data.payment
     });
 });
 
-
-// Изменение адреса
 events.on('order:address-change', (data: { address: string }) => {
     buyer.updateBuyerData({
         address: data.address
     });
 });
 
-
-// Переход ко второй форме заказа
 events.on('order:submit', () => {
     openContacts();
 });
 
-
-// Изменение email
 events.on('contacts:email-change', (data: { email: string }) => {
     buyer.updateBuyerData({
         email: data.email
     });
 });
 
-
-// Изменение телефона
 events.on('contacts:phone-change', (data: { phone: string }) => {
     buyer.updateBuyerData({
         phone: data.phone
     });
 });
 
-
-// Отправка заказа
 events.on('contacts:submit', () => {
     void submitOrder();
 });
-
-
-// =====================================
-// 11. Обработчики кнопок интерфейса
-// =====================================
 
 // Открытие корзины
 basketButton.addEventListener('click', () => {
     openBasket();
 });
 
-
-// =====================================
-// 12. Запуск приложения
-// =====================================
-
-// Начальное состояние счётчика корзины
+// Запуск приложения
+testModels();
 updateBasketCounter();
 
-// Загружаем товары с сервера
 apiService.getProducts()
     .then((response) => {
-        // Сохраняем товары в модели.
-        // Событие catalog:changed автоматически обновит каталог.
         catalog.saveProducts(response.items);
+        renderCatalog(catalog.getProducts());
 
         console.log('Каталог загружен:', response.total);
     })

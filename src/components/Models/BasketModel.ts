@@ -1,41 +1,34 @@
+
 import { IProduct } from '../../types';
-import { IEvents } from '../base/Events';
 
 export class BasketModel {
     protected basketProducts: IProduct[] = [];
 
-    constructor(protected eventSystem: IEvents) {}
-
+    // Получение всех товаров корзины
     getProducts(): IProduct[] {
         return this.basketProducts;
     }
 
+    // Добавление товара в корзину
     addProduct(product: IProduct): void {
         if (!this.hasProduct(product.id)) {
             this.basketProducts.push(product);
-            this.eventSystem.emit('basket:changed');
         }
     }
 
+    // Удаление товара из корзины по ID
     removeProduct(productId: string): void {
-        const oldCount = this.basketProducts.length;
-
         this.basketProducts = this.basketProducts.filter(
             (product) => product.id !== productId
         );
-
-        if (this.basketProducts.length !== oldCount) {
-            this.eventSystem.emit('basket:changed');
-        }
     }
 
+    // Очистка корзины
     clearBasket(): void {
-        if (this.basketProducts.length > 0) {
-            this.basketProducts = [];
-            this.eventSystem.emit('basket:changed');
-        }
+        this.basketProducts = [];
     }
 
+    // Получение общей стоимости товаров
     getTotalPrice(): number {
         return this.basketProducts.reduce(
             (total, product) => total + (product.price ?? 0),
@@ -43,10 +36,12 @@ export class BasketModel {
         );
     }
 
+    // Получение количества товаров
     getProductCount(): number {
         return this.basketProducts.length;
     }
 
+    // Проверка наличия товара в корзине
     hasProduct(productId: string): boolean {
         return this.basketProducts.some(
             (product) => product.id === productId

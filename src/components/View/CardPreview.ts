@@ -16,29 +16,11 @@ export class CardPreview extends Card<TCardCatalog> {
     ) {
         super(container);
 
-        this.categoryElement = ensureElement<HTMLElement>(
-            '.card__category',
-            this.container
-        );
-
-        this.imageElement = ensureElement<HTMLImageElement>(
-            '.card__image',
-            this.container
-        );
-
-        this.descriptionElement = ensureElement<HTMLElement>(
-            '.card__text',
-            this.container
-        );
-
-        this.buttonElement = ensureElement<HTMLButtonElement>(
-            '.card__button',
-            this.container
-        );
-
-        this.buttonElement.addEventListener('click', () => {
-            this.events.emit('preview:button-click');
-        });
+        this.categoryElement = ensureElement<HTMLElement>('.card__category',this.container);
+        this.imageElement = ensureElement<HTMLImageElement>('.card__image',this.container);
+        this.descriptionElement = ensureElement<HTMLElement>('.card__text',this.container);
+        this.buttonElement = ensureElement<HTMLButtonElement>('.card__button',this.container);
+        this.buttonElement.addEventListener('click', () => {this.events.emit('preview:button-click');});
     }
 
     set category(value: string) {

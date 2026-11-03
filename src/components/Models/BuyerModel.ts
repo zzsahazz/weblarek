@@ -1,5 +1,5 @@
+
 import { IBuyer, BuyerErrors, TPayment } from '../../types';
-import { IEvents } from '../base/Events';
 
 export class BuyerModel {
     protected paymentMethod: TPayment | '' = '';
@@ -7,8 +7,7 @@ export class BuyerModel {
     protected emailAddress = '';
     protected phoneNumber = '';
 
-    constructor(protected eventSystem: IEvents) {}
-
+    // Частичное обновление данных покупателя
     updateBuyerData(data: Partial<IBuyer>): void {
         if (data.payment !== undefined) {
             this.paymentMethod = data.payment;
@@ -25,10 +24,9 @@ export class BuyerModel {
         if (data.phone !== undefined) {
             this.phoneNumber = data.phone;
         }
-
-        this.eventSystem.emit('buyer:changed');
     }
 
+    // Получение данных покупателя
     getBuyerData(): Partial<IBuyer> {
         return {
             payment: this.paymentMethod || undefined,
@@ -38,15 +36,15 @@ export class BuyerModel {
         };
     }
 
+    // Очистка данных покупателя
     clearBuyerData(): void {
         this.paymentMethod = '';
         this.deliveryAddress = '';
         this.emailAddress = '';
         this.phoneNumber = '';
-
-        this.eventSystem.emit('buyer:changed');
     }
 
+    // Проверка данных покупателя
     validateBuyerData(): BuyerErrors {
         const errors: BuyerErrors = {};
 

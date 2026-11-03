@@ -20,43 +20,21 @@ export class BasketItem extends Component<IBasketItem> {
     ) {
         super(container);
 
-        this.titleElement = ensureElement<HTMLElement>(
-            '.card__title',
-            this.container
-        );
-
-        this.priceElement = ensureElement<HTMLElement>(
-            '.card__price',
-            this.container
-        );
-
-        this.indexElement = ensureElement<HTMLElement>(
-            '.basket__item-index',
-            this.container
-        );
-
-        this.deleteButton = ensureElement<HTMLButtonElement>(
-            '.basket__item-delete',
-            this.container
-        );
-
-        // Удаление товара из корзины
+        this.titleElement = ensureElement<HTMLElement>('.card__title',this.container);
+        this.priceElement = ensureElement<HTMLElement>('.card__price',this.container);
+        this.indexElement = ensureElement<HTMLElement>('.basket__item-index',this.container);
+        this.deleteButton = ensureElement<HTMLButtonElement>('.basket__item-delete',this.container);
         this.deleteButton.addEventListener('click', onDelete);
     }
 
-    // Установка названия товара
     set title(value: string) {
         this.titleElement.textContent = value;
     }
-
-    // Установка стоимости товара
     set price(value: number | null) {
         this.priceElement.textContent = value === null
             ? settings.pricelessText
             : `${value} ${settings.currency}`;
     }
-
-    // Установка номера товара
     set index(value: number) {
         this.indexElement.textContent = String(value);
     }

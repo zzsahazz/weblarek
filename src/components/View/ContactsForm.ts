@@ -14,36 +14,19 @@ export class ContactsForm extends Component<{}> {
     ) {
         super(container);
 
-        this.emailInput = ensureElement<HTMLInputElement>(
-            'input[name="email"]',
-            this.container
-        );
+        this.emailInput = ensureElement<HTMLInputElement>('input[name="email"]',this.container);
+        this.phoneInput = ensureElement<HTMLInputElement>('input[name="phone"]',this.container);
+        this.submitButton = ensureElement<HTMLButtonElement>('button[type="submit"]',this.container);
+        this.errorsElement = ensureElement<HTMLElement>('.form__errors',this.container);
 
-        this.phoneInput = ensureElement<HTMLInputElement>(
-            'input[name="phone"]',
-            this.container
-        );
-
-        this.submitButton = ensureElement<HTMLButtonElement>(
-            'button[type="submit"]',
-            this.container
-        );
-
-        this.errorsElement = ensureElement<HTMLElement>(
-            '.form__errors',
-            this.container
-        );
-
-        // Изменение email
         this.emailInput.addEventListener('input', () => {
             this.events.emit('contacts:email-change', {
-                email: this.emailInput.value
+            email: this.emailInput.value
             });
 
             this.updateSubmitButton();
         });
 
-        // Изменение телефона
         this.phoneInput.addEventListener('input', () => {
             this.events.emit('contacts:phone-change', {
                 phone: this.phoneInput.value
@@ -52,7 +35,6 @@ export class ContactsForm extends Component<{}> {
             this.updateSubmitButton();
         });
 
-        // Отправка формы
         this.container.addEventListener('submit', (event) => {
             event.preventDefault();
 
@@ -63,11 +45,9 @@ export class ContactsForm extends Component<{}> {
             this.events.emit('contacts:submit');
         });
 
-        // Начальная проверка формы
         this.updateSubmitButton();
     }
 
-    // Проверка заполнения полей
     protected updateSubmitButton(): void {
         const hasEmail = this.emailInput.value.trim() !== '';
         const hasPhone = this.phoneInput.value.trim() !== '';
@@ -75,29 +55,24 @@ export class ContactsForm extends Component<{}> {
         this.submitButton.disabled = !hasEmail || !hasPhone;
     }
 
-    // Отображение ошибок
     set errors(value: string) {
         this.errorsElement.textContent = value;
     }
 
-    // Установка email
     set email(value: string) {
         this.emailInput.value = value;
         this.updateSubmitButton();
     }
 
-    // Установка телефона
     set phone(value: string) {
         this.phoneInput.value = value;
         this.updateSubmitButton();
     }
 
-    // Очистка формы
     clear(): void {
         this.emailInput.value = '';
         this.phoneInput.value = '';
         this.errorsElement.textContent = '';
-
         this.updateSubmitButton();
     }
 }

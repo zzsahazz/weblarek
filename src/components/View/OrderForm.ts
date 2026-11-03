@@ -18,42 +18,20 @@ export class OrderForm extends Component<{}> {
     ) {
         super(container);
 
-        this.cardButton = ensureElement<HTMLButtonElement>(
-            'button[name="card"]',
-            this.container
-        );
+        this.cardButton = ensureElement<HTMLButtonElement>('button[name="card"]',this.container);
+        this.cashButton = ensureElement<HTMLButtonElement>('button[name="cash"]',this.container);
+        this.addressInput = ensureElement<HTMLInputElement>('input[name="address"]',this.container);
+        this.submitButton = ensureElement<HTMLButtonElement>('.order__button',this.container);
+        this.errorsElement = ensureElement<HTMLElement>('.form__errors',this.container);
 
-        this.cashButton = ensureElement<HTMLButtonElement>(
-            'button[name="cash"]',
-            this.container
-        );
-
-        this.addressInput = ensureElement<HTMLInputElement>(
-            'input[name="address"]',
-            this.container
-        );
-
-        this.submitButton = ensureElement<HTMLButtonElement>(
-            '.order__button',
-            this.container
-        );
-
-        this.errorsElement = ensureElement<HTMLElement>(
-            '.form__errors',
-            this.container
-        );
-
-        // Выбор оплаты картой
         this.cardButton.addEventListener('click', () => {
             this.setPayment(TPayment.CARD);
         });
 
-        // Выбор оплаты при получении
         this.cashButton.addEventListener('click', () => {
             this.setPayment(TPayment.CASH);
         });
 
-        // Изменение адреса
         this.addressInput.addEventListener('input', () => {
             this.events.emit('order:address-change', {
                 address: this.addressInput.value
@@ -62,7 +40,6 @@ export class OrderForm extends Component<{}> {
             this.updateSubmitButton();
         });
 
-        // Отправка формы
         this.container.addEventListener('submit', (event) => {
             event.preventDefault();
 
@@ -73,11 +50,9 @@ export class OrderForm extends Component<{}> {
             this.events.emit('order:submit');
         });
 
-        // Начальная проверка формы
         this.updateSubmitButton();
     }
 
-    // Выбор способа оплаты
     setPayment(payment: TPayment): void {
         this.paymentMethod = payment;
 
@@ -98,7 +73,6 @@ export class OrderForm extends Component<{}> {
         this.updateSubmitButton();
     }
 
-    // Проверка заполнения формы
     protected updateSubmitButton(): void {
         const hasPayment = this.paymentMethod !== '';
         const hasAddress = this.addressInput.value.trim() !== '';
@@ -106,23 +80,19 @@ export class OrderForm extends Component<{}> {
         this.submitButton.disabled = !hasPayment || !hasAddress;
     }
 
-    // Отображение ошибок
     set errors(value: string) {
         this.errorsElement.textContent = value;
     }
 
-    // Установка адреса
     set address(value: string) {
         this.addressInput.value = value;
         this.updateSubmitButton();
     }
 
-    // Установка способа оплаты
     set payment(value: TPayment) {
         this.setPayment(value);
     }
 
-    // Очистка формы
     clear(): void {
         this.paymentMethod = '';
         this.addressInput.value = '';
