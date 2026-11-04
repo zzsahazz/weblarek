@@ -4,7 +4,7 @@ import { IProduct } from '../../types';
 export class BasketModel {
     protected basketProducts: IProduct[] = [];
 
-    // Получение всех товаров корзины
+    // Получение товаров корзины
     getProducts(): IProduct[] {
         return this.basketProducts;
     }
@@ -41,7 +41,7 @@ export class BasketModel {
         return this.basketProducts.length;
     }
 
-    // Проверка наличия товара в корзине
+    // Проверка наличия товара по ID
     hasProduct(productId: string): boolean {
         return this.basketProducts.some(
             (product) => product.id === productId

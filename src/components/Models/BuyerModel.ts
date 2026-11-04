@@ -44,7 +44,7 @@ export class BuyerModel {
         this.phoneNumber = '';
     }
 
-    // Проверка данных покупателя
+    // Проверка заполненности данных покупателя
     validateBuyerData(): BuyerErrors {
         const errors: BuyerErrors = {};
 
@@ -56,20 +56,12 @@ export class BuyerModel {
             errors.address = 'Необходимо указать адрес';
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
         if (!this.emailAddress.trim()) {
             errors.email = 'Укажите email';
-        } else if (!emailRegex.test(this.emailAddress.trim())) {
-            errors.email = 'Введите корректный email';
         }
-
-        const phoneRegex = /^\+?[0-9\s\-()]{7,20}$/;
 
         if (!this.phoneNumber.trim()) {
             errors.phone = 'Укажите телефон';
-        } else if (!phoneRegex.test(this.phoneNumber.trim())) {
-            errors.phone = 'Введите корректный номер телефона';
         }
 
         return errors;
