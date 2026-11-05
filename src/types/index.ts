@@ -26,7 +26,7 @@ export interface IProduct {
 
 // Данные покупателя
 export interface IBuyer {
-    payment: TPayment;
+    payment: TPayment | '';
     email: string;
     phone: string;
     address: string;
@@ -43,7 +43,7 @@ export interface IProducts {
 
 // Данные заказа для отправки на сервер
 export interface IOrder {
-    payment: TPayment;
+    payment: TPayment | '';
     email: string;
     phone: string;
     address: string;

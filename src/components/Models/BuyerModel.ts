@@ -29,7 +29,7 @@ export class BuyerModel {
     // Получение данных покупателя
     getBuyerData(): Partial<IBuyer> {
         return {
-            payment: this.paymentMethod || undefined,
+            payment: this.paymentMethod,
             address: this.deliveryAddress,
             email: this.emailAddress,
             phone: this.phoneNumber,
