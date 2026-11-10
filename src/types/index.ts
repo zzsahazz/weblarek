@@ -1,4 +1,3 @@
-
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export interface IApi {
@@ -27,7 +26,7 @@ export interface IProduct {
 }
 
 export interface IBuyer {
-    payment: TPayment;
+    payment: TPayment | ''; 
     email: string;
     phone: string;
     address: string;

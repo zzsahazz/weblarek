@@ -32,14 +32,15 @@ export class BuyerModel {
         });
     }
 
-    getBuyerData(): Partial<IBuyer> {
-        return {
-            payment: this.paymentMethod || undefined,
-            address: this.deliveryAddress,
-            email: this.emailAddress,
-            phone: this.phoneNumber
-        };
-    }
+    getBuyerData(): IBuyer { 
+        return { 
+            payment: this.paymentMethod, 
+            address: this.deliveryAddress, 
+            email: this.emailAddress, 
+            phone: this.phoneNumber, 
+        }; 
+    } 
+
 
     clearBuyerData(): void {
         this.paymentMethod = '';
