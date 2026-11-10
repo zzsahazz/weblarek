@@ -1,16 +1,11 @@
-import { Component } from '../base/Component';
+import { Card } from './Card';
 import { ensureElement } from '../../utils/utils';
-import { settings } from '../../utils/constants';
 
 export interface IBasketItem {
     index: number;
-    title: string;
-    price: number | null;
 }
 
-export class BasketItem extends Component<IBasketItem> {
-    protected titleElement: HTMLElement;
-    protected priceElement: HTMLElement;
+export class BasketItem extends Card<IBasketItem> {
     protected indexElement: HTMLElement;
     protected deleteButton: HTMLButtonElement;
 
@@ -20,20 +15,17 @@ export class BasketItem extends Component<IBasketItem> {
     ) {
         super(container);
 
-        this.titleElement = ensureElement<HTMLElement>('.card__title',this.container);
-        this.priceElement = ensureElement<HTMLElement>('.card__price',this.container);
-        this.indexElement = ensureElement<HTMLElement>('.basket__item-index',this.container);
-        this.deleteButton = ensureElement<HTMLButtonElement>('.basket__item-delete',this.container);
-        this.deleteButton.addEventListener('click', onDelete);
-    }
+        this.indexElement = ensureElement<HTMLElement>(
+            '.basket__item-index',
+            this.container
+        );
 
-    set title(value: string) {
-        this.titleElement.textContent = value;
-    }
-    set price(value: number | null) {
-        this.priceElement.textContent = value === null
-            ? settings.pricelessText
-            : `${value} ${settings.currency}`;
+        this.deleteButton = ensureElement<HTMLButtonElement>(
+            '.basket__item-delete',
+            this.container
+        );
+
+        this.deleteButton.addEventListener('click', onDelete);
     }
     set index(value: number) {
         this.indexElement.textContent = String(value);

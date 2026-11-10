@@ -18,6 +18,6 @@ export class Card<T> extends Component<T> {
     set price(value: number | null) {
         this.priceElement.textContent = value === null
             ? 'Бесценно'
-            : `${value} синапсов`;
+            : `${value} Недоступно`;
     }
 }

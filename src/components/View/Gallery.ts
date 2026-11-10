@@ -5,9 +5,6 @@ export interface IGallery {
     catalog: HTMLElement[];
 }
 
-/**
- * Каталог товаров на главной странице
- */
 export class Gallery extends Component<IGallery> {
     constructor(container: HTMLElement) {
         super(container);
