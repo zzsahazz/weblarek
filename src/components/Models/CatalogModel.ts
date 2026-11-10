@@ -1,6 +1,4 @@
-
 import { IProduct } from '../../types';
-
 export class CatalogModel {
     protected productList: IProduct[] = [];
     protected chosenProduct: IProduct | null = null;
