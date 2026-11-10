@@ -38,7 +38,7 @@ const api = new Api(API_URL);
 const apiService = new ApiService(api);
 
 // ============================================
-// Получение обязательных HTML-элементов
+// Получение HTML-элементов
 // ============================================
 
 function getRequiredElement<T extends HTMLElement>(
@@ -197,7 +197,7 @@ function openBasket(): void {
     modal.open();
 }
 
-// Открытие первой формы: оплата и адрес
+// Открытие формы оплаты и адреса
 function openOrder(): void {
     const orderElement = cloneTemplate<HTMLFormElement>('#order');
 
@@ -215,7 +215,7 @@ function openOrder(): void {
     modal.open();
 }
 
-// Открытие второй формы: email и телефон
+// Открытие формы контактных данных
 function openContacts(): void {
     const errors = buyer.validateBuyerData();
 
@@ -312,7 +312,7 @@ async function submitOrder(): Promise<void> {
 }
 
 // ============================================
-// Подписки на события
+// Подписки на события моделей и View
 // ============================================
 
 // Изменение каталога
@@ -330,7 +330,7 @@ events.on('modal:close', () => {
     modal.close();
 });
 
-// Покупка или удаление товара
+// Нажатие кнопки покупки или удаления товара
 events.on('preview:button-click', () => {
     const product = catalog.getChosenProduct();
 
