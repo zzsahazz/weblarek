@@ -186,14 +186,14 @@ export enum TPayment {
 
 Интерфейс товара:
 
-| Поле | Тип | Описание |
-|---|---|---|
-| `id` | `string` | Идентификатор товара |
-| `description` | `string` | Описание товара |
-| `image` | `string` | Изображение товара |
-| `title` | `string` | Название товара |
-| `category` | `string` | Категория товара |
-| `price` | `number \| null` | Цена товара или `null`, если товар недоступен для покупки |
+interface IProduct {
+    id: string;
+    description: string;
+    image: string;
+    title: string;
+    category: string;
+    price: number | null;
+}
 
 ### IBuyer
 
@@ -688,16 +688,16 @@ constructor(protected events: IEvents)
 Presenter подписывается на события приложения:
 
 
-| `catalog:changed` | Обновляет отображение каталога |
-| `basket:changed` | Обновляет счётчик корзины |
-| `modal:close` | Закрывает модальное окно |
-| `preview:button-click` | Добавляет товар в корзину или удаляет его из неё |
-| `order:payment-change` | Обновляет способ оплаты в `BuyerModel` |
-| `order:address-change` | Обновляет адрес доставки в `BuyerModel` |
-| `order:submit` | Проверяет первую форму и открывает форму контактов |
-| `contacts:email-change` | Обновляет электронную почту покупателя |
-| `contacts:phone-change` | Обновляет номер телефона покупателя |
-| `contacts:submit` | Запускает итоговую проверку и отправку заказа |
+`catalog:changed` - Обновляет отображение каталога 
+`basket:changed` - Обновляет счётчик корзины 
+`modal:close` - Закрывает модальное окно 
+`preview:button-click` - Добавляет товар в корзину или удаляет его из неё 
+`order:payment-change` - Обновляет способ оплаты в `BuyerModel` 
+`order:address-change` - Обновляет адрес доставки в `BuyerModel` 
+`order:submit` - Проверяет первую форму и открывает форму контактов 
+`contacts:email-change` - Обновляет электронную почту покупателя 
+`contacts:phone-change` - Обновляет номер телефона покупателя 
+`contacts:submit` - Запускает итоговую проверку и отправку заказа 
 
 ### Оформление заказа
 
