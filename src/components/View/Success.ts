@@ -1,6 +1,8 @@
 
 import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
 import { ensureElement } from '../../utils/utils';
+import { settings } from '../../utils/constants';
 
 interface ISuccess {
     total: number;
@@ -12,7 +14,7 @@ export class Success extends Component<ISuccess> {
 
     constructor(
         container: HTMLElement,
-        onClose: () => void
+        protected events: IEvents
     ) {
         super(container);
 
@@ -26,11 +28,13 @@ export class Success extends Component<ISuccess> {
             this.container
         );
 
-        this.closeButton.addEventListener('click', onClose);
+        this.closeButton.addEventListener('click', () => {
+            this.events.emit('success:close');
+        });
     }
 
     set total(value: number) {
         this.descriptionElement.textContent =
-            `Списано ${value} синапсов`;
+            `Списано ${value} ${settings.currency}`;
     }
 }

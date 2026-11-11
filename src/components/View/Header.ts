@@ -1,4 +1,5 @@
 import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
 import { ensureElement } from '../../utils/utils';
 
 interface IHeader {
@@ -11,7 +12,7 @@ export class Header extends Component<IHeader> {
 
     constructor(
         container: HTMLElement,
-        onBasketClick: () => void
+        protected events: IEvents
     ) {
         super(container);
 
@@ -25,7 +26,9 @@ export class Header extends Component<IHeader> {
             this.container
         );
 
-        this.basketButton.addEventListener('click', onBasketClick);
+        this.basketButton.addEventListener('click', () => {
+            this.events.emit('basket:open');
+        });
     }
 
     set counter(value: number) {

@@ -1,9 +1,13 @@
+
 import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
 import { ensureElement } from '../../utils/utils';
+import { settings } from '../../utils/constants';
 
 export interface IBasketView {
     items: HTMLElement[];
     total: number;
+    orderDisabled: boolean;
 }
 
 export class BasketView extends Component<IBasketView> {
@@ -13,7 +17,7 @@ export class BasketView extends Component<IBasketView> {
 
     constructor(
         container: HTMLElement,
-        onOrder: () => void
+        protected events: IEvents
     ) {
         super(container);
 
@@ -32,20 +36,19 @@ export class BasketView extends Component<IBasketView> {
             this.container
         );
 
-        this.orderButton.addEventListener('click', onOrder);
+        this.orderButton.addEventListener('click', () => {
+            this.events.emit('basket:order');
+        });
     }
 
-    // Отображение товаров корзины
     set items(items: HTMLElement[]) {
         this.listElement.replaceChildren(...items);
     }
 
-    // Отображение общей стоимости
     set total(value: number) {
-        this.totalElement.textContent = `${value} синапсов`;
+        this.totalElement.textContent = `${value} ${settings.currency}`;
     }
 
-    // Управление доступностью кнопки оформления
     set orderDisabled(value: boolean) {
         this.orderButton.disabled = value;
     }
