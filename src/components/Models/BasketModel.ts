@@ -1,4 +1,3 @@
-
 import { IProduct } from '../../types';
 import { IEvents } from '../base/Events';
 
@@ -15,9 +14,7 @@ export class BasketModel {
         if (!this.hasProduct(product.id)) {
             this.basketProducts.push(product);
 
-            this.events.emit('basket:changed', {
-                products: this.getProducts()
-            });
+            this.events.emit('basket:changed');
         }
     }
 
@@ -29,9 +26,7 @@ export class BasketModel {
         );
 
         if (this.basketProducts.length !== previousCount) {
-            this.events.emit('basket:changed', {
-                products: this.getProducts()
-            });
+            this.events.emit('basket:changed');
         }
     }
 
@@ -39,9 +34,7 @@ export class BasketModel {
         if (this.basketProducts.length > 0) {
             this.basketProducts = [];
 
-            this.events.emit('basket:changed', {
-                products: this.getProducts()
-            });
+            this.events.emit('basket:changed');
         }
     }
 

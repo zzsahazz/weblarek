@@ -1,4 +1,3 @@
-
 import { Component } from '../base/Component';
 import { ensureElement } from '../../utils/utils';
 
@@ -38,17 +37,16 @@ export class BasketView extends Component<IBasketView> {
 
     // Отображение товаров корзины
     set items(items: HTMLElement[]) {
-        if (items.length === 0) {
-            this.listElement.textContent = 'Корзина пуста';
-        } else {
-            this.listElement.replaceChildren(...items);
-        }
-
-        this.orderButton.disabled = items.length === 0;
+        this.listElement.replaceChildren(...items);
     }
 
     // Отображение общей стоимости
     set total(value: number) {
         this.totalElement.textContent = `${value} синапсов`;
+    }
+
+    // Управление доступностью кнопки оформления
+    set orderDisabled(value: boolean) {
+        this.orderButton.disabled = value;
     }
 }

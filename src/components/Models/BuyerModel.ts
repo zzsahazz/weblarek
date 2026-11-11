@@ -1,4 +1,3 @@
-
 import { IBuyer, BuyerErrors, TPayment } from '../../types';
 import { IEvents } from '../base/Events';
 
@@ -27,20 +26,17 @@ export class BuyerModel {
             this.phoneNumber = data.phone;
         }
 
-        this.events.emit('buyer:changed', {
-            buyer: this.getBuyerData()
-        });
+        this.events.emit('buyer:changed');
     }
 
-    getBuyerData(): IBuyer { 
-        return { 
-            payment: this.paymentMethod, 
-            address: this.deliveryAddress, 
-            email: this.emailAddress, 
-            phone: this.phoneNumber, 
-        }; 
-    } 
-
+    getBuyerData(): IBuyer {
+        return {
+            payment: this.paymentMethod,
+            address: this.deliveryAddress,
+            email: this.emailAddress,
+            phone: this.phoneNumber,
+        };
+    }
 
     clearBuyerData(): void {
         this.paymentMethod = '';
@@ -48,9 +44,7 @@ export class BuyerModel {
         this.emailAddress = '';
         this.phoneNumber = '';
 
-        this.events.emit('buyer:changed', {
-            buyer: this.getBuyerData()
-        });
+        this.events.emit('buyer:changed');
     }
 
     validateBuyerData(): BuyerErrors {
@@ -64,20 +58,12 @@ export class BuyerModel {
             errors.address = 'Необходимо указать адрес';
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
         if (!this.emailAddress.trim()) {
             errors.email = 'Укажите email';
-        } else if (!emailRegex.test(this.emailAddress.trim())) {
-            errors.email = 'Введите корректный email';
         }
-
-        const phoneRegex = /^\+?[0-9\s\-()]{7,20}$/;
 
         if (!this.phoneNumber.trim()) {
             errors.phone = 'Укажите телефон';
-        } else if (!phoneRegex.test(this.phoneNumber.trim())) {
-            errors.phone = 'Введите корректный номер телефона';
         }
 
         return errors;

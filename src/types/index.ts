@@ -1,3 +1,4 @@
+
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export interface IApi {
@@ -26,7 +27,7 @@ export interface IProduct {
 }
 
 export interface IBuyer {
-    payment: TPayment | ''; 
+    payment: TPayment | '';
     email: string;
     phone: string;
     address: string;
@@ -51,13 +52,40 @@ export interface IOrderResult {
     total: number;
 }
 
-export type TCard = Pick<IProduct, 'title' | 'price'> & {
+// Общие свойства всех карточек
+export interface ICard {
+    title: string;
+    price: number | null;
+}
+
+// Данные изображения для карточки превью
+export interface ICardImage {
+    src: string;
+    alt: string;
+}
+
+// Дополнительные необязательные свойства карточки
+export type TCard = ICard & {
     category?: string;
     image?: string;
     description?: string;
 };
 
+// Данные карточки каталога
 export type TCardCatalog = TCard & Pick<IProduct, 'category' | 'image'>;
+
+// Данные карточки предварительного просмотра
+export type TCardPreview = Omit<TCardCatalog, 'image'> & {
+    image: ICardImage;
+    description: string;
+    buttonText: string;
+    buttonDisabled: boolean;
+};
+
+// Данные элемента корзины
+export interface IBasketItem {
+    index: number;
+}
 
 export interface ICardActions {
     onClick?: () => void;

@@ -1,9 +1,7 @@
+
 import { Card } from './Card';
 import { ensureElement } from '../../utils/utils';
-
-export interface IBasketItem {
-    index: number;
-}
+import { IBasketItem } from '../../types';
 
 export class BasketItem extends Card<IBasketItem> {
     protected indexElement: HTMLElement;
@@ -27,6 +25,7 @@ export class BasketItem extends Card<IBasketItem> {
 
         this.deleteButton.addEventListener('click', onDelete);
     }
+
     set index(value: number) {
         this.indexElement.textContent = String(value);
     }

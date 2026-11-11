@@ -11,6 +11,7 @@ import { BuyerModel } from './components/Models/BuyerModel';
 import { ApiService } from './components/ApiService';
 
 import { Gallery } from './components/View/Gallery';
+import { Header } from './components/View/Header';
 import { CardCatalog } from './components/View/CardCatalog';
 import { CardPreview } from './components/View/CardPreview';
 import { Modal } from './components/View/Modal';
@@ -18,6 +19,7 @@ import { BasketItem } from './components/View/BasketItem';
 import { BasketView } from './components/View/BasketView';
 import { OrderForm } from './components/View/OrderForm';
 import { ContactsForm } from './components/View/ContactsForm';
+import { Success } from './components/View/Success';
 
 import { cloneTemplate } from './utils/utils';
 import { API_URL } from './utils/constants';
@@ -55,61 +57,90 @@ function getRequiredElement<T extends HTMLElement>(
 
 const galleryElement = getRequiredElement<HTMLElement>('.gallery');
 const modalElement = getRequiredElement<HTMLElement>('#modal-container');
-
-const basketCounter = getRequiredElement<HTMLElement>(
-    '.header__basket-counter'
-);
-
-const basketButton = getRequiredElement<HTMLButtonElement>(
-    '.header__basket'
-);
+const headerElement = getRequiredElement<HTMLElement>('.header');
 
 // ============================================
 // Создание компонентов View
 // ============================================
 
 const gallery = new Gallery(galleryElement);
-const modal = new Modal(events, modalElement);
+const modal = new Modal(modalElement);
 
 let orderForm: OrderForm | null = null;
 let contactsForm: ContactsForm | null = null;
+
+const header = new Header(headerElement, () => {
+    openBasket();
+});
 
 // ============================================
 // Функции Presenter
 // ============================================
 
 // Обновление счётчика корзины
+
 function updateBasketCounter(): void {
-    basketCounter.textContent = String(basket.getProductCount());
+    header.counter = basket.getProductCount();
+}
+
+// Отображение ошибок и состояния первой формы
+
+function updateOrderForm(): void {
+    if (!orderForm) {
+        return;
+    }
+
+    const errors = buyer.validateBuyerData();
+
+    const orderErrors = [
+        errors.payment,
+        errors.address
+    ].filter(Boolean);
+
+    orderForm.errors = orderErrors.join('. ');
+    orderForm.valid = orderErrors.length === 0;
+}
+
+// Отображение ошибок и состояния второй формы
+
+function updateContactsForm(): void {
+    if (!contactsForm) {
+        return;
+    }
+
+    const errors = buyer.validateBuyerData();
+
+    const contactsErrors = [
+        errors.email,
+        errors.phone
+    ].filter(Boolean);
+
+    contactsForm.errors = contactsErrors.join('. ');
+    contactsForm.valid = contactsErrors.length === 0;
 }
 
 // Отображение успешного оформления заказа
+
 function showSuccess(total: number): void {
     const successElement = cloneTemplate<HTMLElement>('#success');
 
-    const description = successElement.querySelector<HTMLElement>(
-        '.order-success__description'
+    const success = new Success(
+        successElement,
+        () => {
+            modal.close();
+        }
     );
 
-    const closeButton = successElement.querySelector<HTMLButtonElement>(
-        '.order-success__close'
-    );
+    success.total = total;
 
-    if (!description || !closeButton) {
-        throw new Error('Не найдены элементы окна успешного заказа');
-    }
-
-    description.textContent = `Списано ${total} синапсов`;
-
-    closeButton.addEventListener('click', () => {
-        modal.close();
-    });
-
-    modal.content = successElement;
+    modal.content = success.render();
     modal.open();
 }
 
-// Отображение каталога товаров
+// ============================================
+// Отображение каталога
+// ============================================
+
 function renderCatalog(products: IProduct[]): void {
     const cards = products.map((product) => {
         const cardElement = cloneTemplate<HTMLElement>('#card-catalog');
@@ -131,7 +162,10 @@ function renderCatalog(products: IProduct[]): void {
     gallery.catalog = cards;
 }
 
+// ============================================
 // Открытие карточки товара
+// ============================================
+
 function openPreview(product: IProduct): void {
     catalog.chooseProduct(product);
 
@@ -142,7 +176,12 @@ function openPreview(product: IProduct): void {
     preview.title = product.title;
     preview.price = product.price;
     preview.category = product.category;
-    preview.image = product.image;
+
+    preview.image = {
+        src: product.image,
+        alt: product.title
+    };
+
     preview.description = product.description;
 
     const alreadyInBasket = basket.hasProduct(product.id);
@@ -162,7 +201,10 @@ function openPreview(product: IProduct): void {
     modal.open();
 }
 
+// ============================================
 // Открытие корзины
+// ============================================
+
 function openBasket(): void {
     const basketElement = cloneTemplate<HTMLElement>('#basket');
 
@@ -192,12 +234,16 @@ function openBasket(): void {
 
     basketView.items = basketItems;
     basketView.total = basket.getTotalPrice();
+    basketView.orderDisabled = products.length === 0;
 
     modal.content = basketView.render();
     modal.open();
 }
 
-// Открытие формы оплаты и адреса
+// ============================================
+// Открытие первой формы: оплата и адрес
+// ============================================
+
 function openOrder(): void {
     const orderElement = cloneTemplate<HTMLFormElement>('#order');
 
@@ -205,17 +251,19 @@ function openOrder(): void {
 
     const buyerData = buyer.getBuyerData();
 
-    if (buyerData.payment) {
-        orderForm.payment = buyerData.payment;
-    }
+    orderForm.payment = buyerData.payment;
+    orderForm.address = buyerData.address;
 
-    orderForm.address = buyerData.address || '';
+    updateOrderForm();
 
     modal.content = orderForm.render();
     modal.open();
 }
 
-// Открытие формы контактных данных
+// ============================================
+// Открытие второй формы: контакты
+// ============================================
+
 function openContacts(): void {
     const errors = buyer.validateBuyerData();
 
@@ -227,6 +275,7 @@ function openContacts(): void {
     if (orderErrors.length > 0) {
         if (orderForm) {
             orderForm.errors = orderErrors.join('. ');
+            orderForm.valid = false;
         }
 
         return;
@@ -238,14 +287,19 @@ function openContacts(): void {
 
     const buyerData = buyer.getBuyerData();
 
-    contactsForm.email = buyerData.email || '';
-    contactsForm.phone = buyerData.phone || '';
+    contactsForm.email = buyerData.email;
+    contactsForm.phone = buyerData.phone;
+
+    updateContactsForm();
 
     modal.content = contactsForm.render();
     modal.open();
 }
 
-// Проверка данных и отправка заказа
+// ============================================
+// Отправка заказа
+// ============================================
+
 async function submitOrder(): Promise<void> {
     const errors = buyer.validateBuyerData();
 
@@ -253,7 +307,13 @@ async function submitOrder(): Promise<void> {
 
     if (errorMessages.length > 0) {
         if (contactsForm) {
-            contactsForm.errors = errorMessages.join('. ');
+            const contactsErrors = [
+                errors.email,
+                errors.phone
+            ].filter(Boolean);
+
+            contactsForm.errors = contactsErrors.join('. ');
+            contactsForm.valid = false;
         }
 
         return;
@@ -269,6 +329,7 @@ async function submitOrder(): Promise<void> {
     ) {
         if (contactsForm) {
             contactsForm.errors = 'Проверьте заполнение всех полей';
+            contactsForm.valid = false;
         }
 
         return;
@@ -277,6 +338,7 @@ async function submitOrder(): Promise<void> {
     if (basket.getProductCount() === 0) {
         if (contactsForm) {
             contactsForm.errors = 'Корзина пуста';
+            contactsForm.valid = false;
         }
 
         return;
@@ -312,25 +374,34 @@ async function submitOrder(): Promise<void> {
 }
 
 // ============================================
-// Подписки на события моделей и View
+// Подписки на события моделей
 // ============================================
 
 // Изменение каталога
-events.on('catalog:changed', (data: { products: IProduct[] }) => {
-    renderCatalog(data.products);
+
+events.on('catalog:changed', () => {
+    renderCatalog(catalog.getProducts());
 });
 
 // Изменение корзины
+
 events.on('basket:changed', () => {
     updateBasketCounter();
 });
 
-// Закрытие модального окна
-events.on('modal:close', () => {
-    modal.close();
+// Изменение данных покупателя
+
+events.on('buyer:changed', () => {
+    updateOrderForm();
+    updateContactsForm();
 });
 
+// ============================================
+// Подписки на события View
+// ============================================
+
 // Нажатие кнопки покупки или удаления товара
+
 events.on('preview:button-click', () => {
     const product = catalog.getChosenProduct();
 
@@ -348,6 +419,7 @@ events.on('preview:button-click', () => {
 });
 
 // Изменение способа оплаты
+
 events.on('order:payment-change', (data: { payment: TPayment }) => {
     buyer.updateBuyerData({
         payment: data.payment
@@ -355,6 +427,7 @@ events.on('order:payment-change', (data: { payment: TPayment }) => {
 });
 
 // Изменение адреса
+
 events.on('order:address-change', (data: { address: string }) => {
     buyer.updateBuyerData({
         address: data.address
@@ -362,11 +435,13 @@ events.on('order:address-change', (data: { address: string }) => {
 });
 
 // Переход ко второй форме
+
 events.on('order:submit', () => {
     openContacts();
 });
 
 // Изменение email
+
 events.on('contacts:email-change', (data: { email: string }) => {
     buyer.updateBuyerData({
         email: data.email
@@ -374,6 +449,7 @@ events.on('contacts:email-change', (data: { email: string }) => {
 });
 
 // Изменение телефона
+
 events.on('contacts:phone-change', (data: { phone: string }) => {
     buyer.updateBuyerData({
         phone: data.phone
@@ -381,6 +457,7 @@ events.on('contacts:phone-change', (data: { phone: string }) => {
 });
 
 // Отправка заказа
+
 events.on('contacts:submit', () => {
     void submitOrder();
 });
@@ -389,15 +466,12 @@ events.on('contacts:submit', () => {
 // Запуск приложения
 // ============================================
 
-// Открытие корзины
-basketButton.addEventListener('click', () => {
-    openBasket();
-});
+// Начальное значение счётчика корзины
 
-// Начальное значение счётчика
 updateBasketCounter();
 
 // Загрузка каталога с сервера
+
 apiService.getProducts()
     .then((response) => {
         catalog.saveProducts(response.items);

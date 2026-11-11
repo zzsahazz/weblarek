@@ -1,10 +1,11 @@
+
 import { Card } from './Card';
 import { IEvents } from '../base/Events';
-import { TCardCatalog } from '../../types';
+import { TCardPreview } from '../../types';
 import { ensureElement } from '../../utils/utils';
 import { categoryMap, CDN_URL } from '../../utils/constants';
 
-export class CardPreview extends Card<TCardCatalog> {
+export class CardPreview extends Card<TCardPreview> {
     protected categoryElement: HTMLElement;
     protected imageElement: HTMLImageElement;
     protected descriptionElement: HTMLElement;
@@ -16,11 +17,29 @@ export class CardPreview extends Card<TCardCatalog> {
     ) {
         super(container);
 
-        this.categoryElement = ensureElement<HTMLElement>('.card__category',this.container);
-        this.imageElement = ensureElement<HTMLImageElement>('.card__image',this.container);
-        this.descriptionElement = ensureElement<HTMLElement>('.card__text',this.container);
-        this.buttonElement = ensureElement<HTMLButtonElement>('.card__button',this.container);
-        this.buttonElement.addEventListener('click', () => {this.events.emit('preview:button-click');});
+        this.categoryElement = ensureElement<HTMLElement>(
+            '.card__category',
+            this.container
+        );
+
+        this.imageElement = ensureElement<HTMLImageElement>(
+            '.card__image',
+            this.container
+        );
+
+        this.descriptionElement = ensureElement<HTMLElement>(
+            '.card__text',
+            this.container
+        );
+
+        this.buttonElement = ensureElement<HTMLButtonElement>(
+            '.card__button',
+            this.container
+        );
+
+        this.buttonElement.addEventListener('click', () => {
+            this.events.emit('preview:button-click');
+        });
     }
 
     set category(value: string) {
@@ -34,11 +53,11 @@ export class CardPreview extends Card<TCardCatalog> {
         }
     }
 
-    set image(value: string) {
+    set image(value: { src: string; alt: string }) {
         this.setImage(
             this.imageElement,
-            CDN_URL + value,
-            this.titleElement.textContent ?? ''
+            value.src,
+            value.alt
         );
     }
 
