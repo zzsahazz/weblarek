@@ -1,7 +1,12 @@
+
 import { Component } from '../base/Component';
 import { ensureElement } from '../../utils/utils';
 
-export class Modal extends Component<{}> {
+export interface IModal {
+    content: HTMLElement;
+}
+
+export class Modal extends Component<IModal> {
     protected closeButton: HTMLButtonElement;
     protected contentElement: HTMLElement;
 

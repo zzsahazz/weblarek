@@ -27,11 +27,15 @@ export interface IProduct {
 }
 
 export interface IBuyer {
-    payment: TPayment | '';
+    payment: TPayment;
     email: string;
     phone: string;
     address: string;
 }
+  
+export type TBuyerData = Omit<IBuyer, 'payment'> & {
+    payment: TPayment | '';
+};
 
 export interface IProducts {
     items: IProduct[];

@@ -1,4 +1,5 @@
-import { IBuyer, BuyerErrors, TPayment } from '../../types';
+
+import { BuyerErrors, TPayment, TBuyerData } from '../../types';
 import { IEvents } from '../base/Events';
 
 export class BuyerModel {
@@ -9,7 +10,7 @@ export class BuyerModel {
 
     constructor(protected events: IEvents) {}
 
-    updateBuyerData(data: Partial<IBuyer>): void {
+    updateBuyerData(data: Partial<TBuyerData>): void {
         if (data.payment !== undefined) {
             this.paymentMethod = data.payment;
         }
@@ -29,7 +30,7 @@ export class BuyerModel {
         this.events.emit('buyer:changed');
     }
 
-    getBuyerData(): IBuyer {
+    getBuyerData(): TBuyerData {
         return {
             payment: this.paymentMethod,
             address: this.deliveryAddress,

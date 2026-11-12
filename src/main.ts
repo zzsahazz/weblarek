@@ -111,15 +111,7 @@ function renderCatalog(): void {
 }
 
 // ============================================
-// 5. Выбор товара
-// ============================================
-
-function openPreview(product: IProduct): void {
-    catalog.chooseProduct(product);
-}
-
-// ============================================
-// 6. Отображение корзины
+// 5. Отображение корзины
 // ============================================
 
 function renderBasket(): void {
@@ -128,8 +120,11 @@ function renderBasket(): void {
     const items = products.map((product, index) => {
         const item = new BasketItem(
             cloneTemplate<HTMLElement>('#card-basket'),
-            events,
-            product.id
+            {
+                onClick: () => {
+                    events.emit('basket:delete', product);
+                }
+            }
         );
 
         return item.render({
@@ -147,34 +142,43 @@ function renderBasket(): void {
 }
 
 // ============================================
-// 7. Открытие корзины
+// 6. Открытие корзины
 // ============================================
 
 function openBasket(): void {
-    modal.content = basketView.render();
+    modal.render({
+        content: basketView.render()
+    });
+
     modal.open();
 }
 
 // ============================================
-// 8. Открытие формы заказа
+// 7. Открытие формы заказа
 // ============================================
 
 function openOrder(): void {
-    modal.content = orderForm.render();
+    modal.render({
+        content: orderForm.render()
+    });
+
     modal.open();
 }
 
 // ============================================
-// 9. Открытие формы контактных данных
+// 8. Открытие формы контактных данных
 // ============================================
 
 function openContacts(): void {
-    modal.content = contactsForm.render();
+    modal.render({
+        content: contactsForm.render()
+    });
+
     modal.open();
 }
 
 // ============================================
-// 10. Обновление форм и валидация
+// 9. Обновление форм и валидация
 // ============================================
 
 function updateForms(): void {
@@ -192,32 +196,43 @@ function updateForms(): void {
     ].filter(Boolean).join('. ');
 
     orderForm.render({
-        payment: buyerData.payment ?? '',
-        address: buyerData.address ?? '',
+        payment: buyerData.payment,
+        address: buyerData.address,
         errors: orderErrors,
         valid: !errors.payment && !errors.address
     });
 
     contactsForm.render({
-        email: buyerData.email ?? '',
-        phone: buyerData.phone ?? '',
+        email: buyerData.email,
+        phone: buyerData.phone,
         errors: contactsErrors,
         valid: !errors.email && !errors.phone
     });
 }
 
 // ============================================
-// 11. Отправка заказа
+// 10. Отправка заказа
 // ============================================
 
 async function submitOrder(): Promise<void> {
+    const errors = buyer.validateBuyerData();
+
+    if (Object.keys(errors).length > 0) {
+        updateForms();
+        return;
+    }
+
     const buyerData = buyer.getBuyerData();
 
+    if (!buyerData.payment) {
+        return;
+    }
+
     const order: IOrder = {
-        payment: buyerData.payment as TPayment,
-        address: buyerData.address as string,
-        email: buyerData.email as string,
-        phone: buyerData.phone as string,
+        payment: buyerData.payment,
+        address: buyerData.address,
+        email: buyerData.email,
+        phone: buyerData.phone,
         total: basket.getTotalPrice(),
         items: basket.getProducts().map((product) => product.id)
     };
@@ -230,8 +245,10 @@ async function submitOrder(): Promise<void> {
         buyer.clearBuyerData();
 
         // Показываем результат оформления заказа
-        modal.content = success.render({
-            total: response.total
+        modal.render({
+            content: success.render({
+                total: response.total
+            })
         });
 
         modal.open();
@@ -239,22 +256,20 @@ async function submitOrder(): Promise<void> {
     } catch (error: unknown) {
         console.error('Ошибка оформления заказа:', error);
 
-        const buyerData = buyer.getBuyerData();
+        const currentBuyerData = buyer.getBuyerData();
+        const currentErrors = buyer.validateBuyerData();
 
         contactsForm.render({
-            email: buyerData.email ?? '',
-            phone: buyerData.phone ?? '',
+            email: currentBuyerData.email,
+            phone: currentBuyerData.phone,
             errors: 'Не удалось оформить заказ. Попробуйте ещё раз.',
-            valid: false
+            valid: !currentErrors.email && !currentErrors.phone
         });
-
-        modal.content = contactsForm.render();
-        modal.open();
     }
 }
 
 // ============================================
-// 12. Подписки на события
+// 11. Подписки на события
 // ============================================
 
 // Изменение каталога
@@ -282,17 +297,19 @@ events.on('preview:changed', () => {
         buttonText = 'Удалить из корзины';
     }
 
-    modal.content = preview.render({
-        title: product.title,
-        price: product.price,
-        category: product.category,
-        image: {
-            src: CDN_URL + product.image,
-            alt: product.title
-        },
-        description: product.description,
-        buttonText,
-        buttonDisabled
+    modal.render({
+        content: preview.render({
+            title: product.title,
+            price: product.price,
+            category: product.category,
+            image: {
+                src: CDN_URL + product.image,
+                alt: product.title
+            },
+            description: product.description,
+            buttonText,
+            buttonDisabled
+        })
     });
 
     modal.open();
@@ -311,7 +328,7 @@ events.on('buyer:changed', () => {
 
 // Выбор карточки товара
 events.on('card:select', (product: IProduct) => {
-    openPreview(product);
+    catalog.chooseProduct(product);
 });
 
 // Открытие корзины
@@ -320,8 +337,8 @@ events.on('basket:open', () => {
 });
 
 // Удаление товара из корзины
-events.on('basket:delete', (data: { productId: string }) => {
-    basket.removeProduct(data.productId);
+events.on('basket:delete', (product: IProduct) => {
+    basket.removeProduct(product.id);
 });
 
 // Переход к оформлению заказа
@@ -389,13 +406,8 @@ events.on('success:close', () => {
     modal.close();
 });
 
-// Закрытие модального окна
-events.on('modal:close', () => {
-    modal.close();
-});
-
 // ============================================
-// 13. Первоначальная инициализация приложения
+// 12. Первоначальная инициализация приложения
 // ============================================
 
 // Сбрасываем начальное состояние моделей

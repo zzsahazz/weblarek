@@ -1,7 +1,6 @@
 import { Card } from './Card';
-import { IEvents } from '../base/Events';
 import { ensureElement } from '../../utils/utils';
-import { IBasketItem } from '../../types';
+import { IBasketItem, ICardActions } from '../../types';
 
 export class BasketItem extends Card<IBasketItem> {
     protected indexElement: HTMLElement;
@@ -9,8 +8,7 @@ export class BasketItem extends Card<IBasketItem> {
 
     constructor(
         container: HTMLElement,
-        protected events: IEvents,
-        protected productId: string
+        actions?: ICardActions
     ) {
         super(container);
 
@@ -25,9 +23,7 @@ export class BasketItem extends Card<IBasketItem> {
         );
 
         this.deleteButton.addEventListener('click', () => {
-            this.events.emit('basket:delete', {
-                productId: this.productId
-            });
+            actions?.onClick?.();
         });
     }
 

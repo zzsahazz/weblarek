@@ -186,16 +186,26 @@ export enum TPayment {
 
 ```ts
 export interface IBuyer {
-    payment: TPayment | '';
+    payment: TPayment;
     email: string;
     phone: string;
     address: string;
 }
 ```
 
+### TBuyerData
+
+Тип данных покупателя, используемый моделью до выбора способа оплаты. Поле `payment` может содержать пустую строку:
+
+```ts
+export type TBuyerData = Omit<IBuyer, 'payment'> & {
+    payment: TPayment | '';
+};
+```
+
 ### BuyerErrors
 
-Тип ошибок валидации данных покупателя:
+Тип ошибок валидации данных покупателя. Каждое поле содержит сообщение об ошибке или отсутствует:
 
 ```ts
 export type BuyerErrors = Partial<Record<keyof IBuyer, string>>;
@@ -332,16 +342,24 @@ export interface ICardActions {
 
 Предоставляет общие методы для работы с DOM-элементами и их отображения.
 
+Основные элементы:
+
+- `container: HTMLElement` — DOM-элемент компонента.
+
+Основные методы:
+
+- `render(data?: Partial<T>): HTMLElement` — обновляет данные компонента и возвращает его DOM-элемент.
+
 ### Events.ts
 
 Содержит интерфейс `IEvents` и класс `EventEmitter`.
 
 `EventEmitter` реализует событийную модель приложения и предоставляет методы:
 
-- `on()` — подписка на событие;
-- `off()` — отписка от события;
-- `emit()` — генерация события;
-- `trigger()` — создание обработчика события.
+- `on(eventName: string, callback: Function): void` — подписка на событие;
+- `off(eventName: string, callback: Function): void` — отписка от события;
+- `emit(eventName: string, data?: object): void` — генерация события;
+- `trigger(eventName: string, context?: object): (data: object) => void` — создание обработчика события.
 
 ## Модели данных (Model)
 
@@ -349,23 +367,29 @@ export interface ICardActions {
 
 Модель каталога товаров.
 
-Отвечает за:
+Хранит список товаров и выбранный для предварительного просмотра товар.
 
-- хранение списка товаров;
-- сохранение полученных с сервера товаров;
-- получение списка товаров;
-- поиск товара по идентификатору;
-- хранение выбранного товара для предварительного просмотра.
+**Поля:**
 
-Основные методы:
+- `productList: IProduct[]` — массив товаров каталога;
+- `chosenProduct: IProduct | null` — выбранный товар или `null`, если товар не выбран;
+- `events: IEvents` — объект для генерации событий.
 
-- `saveProducts(products)` — сохраняет список товаров;
-- `getProducts()` — возвращает список товаров;
-- `findProduct(productId)` — ищет товар по идентификатору;
-- `chooseProduct(product)` — устанавливает выбранный товар;
-- `getChosenProduct()` — возвращает выбранный товар.
+**Конструктор:**
 
-Генерируемые события:
+```ts
+constructor(events: IEvents)
+```
+
+**Методы:**
+
+- `saveProducts(products: IProduct[]): void` — сохраняет список товаров и генерирует событие `catalog:changed`;
+- `getProducts(): IProduct[]` — возвращает копию массива товаров;
+- `findProduct(productId: string): IProduct | undefined` — ищет товар по идентификатору;
+- `chooseProduct(product: IProduct | null): void` — устанавливает выбранный товар и генерирует событие `preview:changed`;
+- `getChosenProduct(): IProduct | null` — возвращает выбранный товар.
+
+**Генерируемые события:**
 
 - `catalog:changed` — список товаров изменён;
 - `preview:changed` — выбранный товар изменён.
@@ -376,19 +400,32 @@ export interface ICardActions {
 
 Отвечает за хранение товаров, добавление и удаление товаров, подсчёт количества и общей стоимости заказа.
 
-Основные методы:
+**Поля:**
 
-- `getProducts()` — возвращает товары корзины;
-- `addProduct(product)` — добавляет товар в корзину, если его там ещё нет;
-- `removeProduct(productId)` — удаляет товар по идентификатору;
-- `clearBasket()` — очищает корзину;
-- `getTotalPrice()` — возвращает общую стоимость товаров;
-- `getProductCount()` — возвращает количество товаров;
-- `hasProduct(productId)` — проверяет наличие товара в корзине.
+- `basketProducts: IProduct[]` — массив товаров в корзине;
+- `events: IEvents` — объект для генерации событий.
 
-Генерируемое событие:
+**Конструктор:**
+
+```ts
+constructor(events: IEvents)
+```
+
+**Методы:**
+
+- `getProducts(): IProduct[]` — возвращает копию массива товаров корзины;
+- `addProduct(product: IProduct): void` — добавляет товар в корзину, если его там ещё нет;
+- `removeProduct(productId: string): void` — удаляет товар по идентификатору;
+- `clearBasket(): void` — очищает корзину;
+- `getTotalPrice(): number` — возвращает общую стоимость товаров;
+- `getProductCount(): number` — возвращает количество товаров;
+- `hasProduct(productId: string): boolean` — проверяет наличие товара в корзине.
+
+**Генерируемое событие:**
 
 - `basket:changed` — содержимое корзины изменено.
+
+Событие генерируется при фактическом изменении содержимого корзины.
 
 ### BuyerModel.ts
 
@@ -396,12 +433,26 @@ export interface ICardActions {
 
 Отвечает за хранение контактных данных и информации о доставке.
 
-Основные методы:
+**Поля:**
 
-- `updateBuyerData(data)` — обновляет данные покупателя;
-- `getBuyerData()` — возвращает текущие данные покупателя;
-- `clearBuyerData()` — очищает данные покупателя;
-- `validateBuyerData()` — проверяет заполненность обязательных полей.
+- `paymentMethod: TPayment | ''` — выбранный способ оплаты;
+- `deliveryAddress: string` — адрес доставки;
+- `emailAddress: string` — электронная почта покупателя;
+- `phoneNumber: string` — номер телефона покупателя;
+- `events: IEvents` — объект для генерации событий.
+
+**Конструктор:**
+
+```ts
+constructor(events: IEvents)
+```
+
+**Методы:**
+
+- `updateBuyerData(data: Partial<TBuyerData>): void` — обновляет переданные данные покупателя;
+- `getBuyerData(): TBuyerData` — возвращает текущие данные покупателя;
+- `clearBuyerData(): void` — очищает данные покупателя;
+- `validateBuyerData(): BuyerErrors` — проверяет заполненность обязательных полей и возвращает объект ошибок валидации.
 
 Проверяются следующие данные:
 
@@ -410,7 +461,7 @@ export interface ICardActions {
 - заполнен ли email;
 - заполнен ли телефон.
 
-Генерируемое событие:
+**Генерируемое событие:**
 
 - `buyer:changed` — данные покупателя изменены.
 
@@ -420,10 +471,20 @@ export interface ICardActions {
 
 Класс `ApiService` отвечает за взаимодействие приложения с сервером на уровне бизнес-операций.
 
-Основные методы:
+**Поле:**
 
-- `getProducts()` — получает список товаров;
-- `createOrder(order)` — отправляет заказ на сервер.
+- `api: IApi` — экземпляр базового API-клиента.
+
+**Конструктор:**
+
+```ts
+constructor(api: IApi)
+```
+
+**Методы:**
+
+- `getProducts(): Promise<IProducts>` — получает с сервера список товаров;
+- `createOrder(order: IOrder): Promise<IOrderResult>` — отправляет заказ на сервер и возвращает результат оформления заказа.
 
 Для выполнения запросов используется базовый класс `Api`.
 
@@ -435,17 +496,73 @@ export interface ICardActions {
 
 Содержит общую логику отображения названия и цены товара.
 
+**Поля:**
+
+- `titleElement: HTMLElement` — DOM-элемент названия товара;
+- `priceElement: HTMLElement` — DOM-элемент цены товара.
+
+**Конструктор:**
+
+```ts
+constructor(container: HTMLElement)
+```
+
+**Сеттеры:**
+
+- `title: string` — устанавливает название товара;
+- `price: number | null` — устанавливает цену товара. Если цена отсутствует (`null`), отображается соответствующее значение.
+
 ### CardCatalog.ts
 
 Компонент карточки товара в каталоге.
 
-Отображает основную информацию о товаре. При выборе карточки генерирует событие `card:select`.
+Отображает основную информацию о товаре.
+
+**Поля:**
+
+- `categoryElement: HTMLElement` — DOM-элемент категории товара;
+- `imageElement: HTMLImageElement` — DOM-элемент изображения товара.
+
+**Конструктор:**
+
+```ts
+constructor(container: HTMLElement, actions?: ICardActions)
+```
+
+**Сеттеры:**
+
+- `category: string` — устанавливает категорию товара и соответствующий CSS-класс;
+- `image: string` — устанавливает изображение товара.
+
+При нажатии на карточку вызывается переданный обработчик `actions.onClick`. В `main.ts` этот обработчик генерирует событие `card:select`.
 
 ### CardPreview.ts
 
 Компонент предварительного просмотра товара.
 
 Отображает подробную информацию о выбранном товаре, изображение, описание и кнопку добавления или удаления товара из корзины.
+
+**Поля:**
+
+- `events: IEvents` — объект для генерации событий;
+- `categoryElement: HTMLElement` — DOM-элемент категории товара;
+- `imageElement: HTMLImageElement` — DOM-элемент изображения;
+- `descriptionElement: HTMLElement` — DOM-элемент описания товара;
+- `buttonElement: HTMLButtonElement` — кнопка действия с товаром.
+
+**Конструктор:**
+
+```ts
+constructor(events: IEvents, container: HTMLElement)
+```
+
+**Сеттеры:**
+
+- `category: string` — устанавливает категорию товара;
+- `image: ICardImage` — устанавливает изображение и альтернативный текст;
+- `description: string` — устанавливает описание товара;
+- `buttonText: string` — устанавливает текст кнопки;
+- `buttonDisabled: boolean` — управляет доступностью кнопки.
 
 При нажатии на кнопку генерирует событие `preview:button-click`.
 
@@ -455,19 +572,43 @@ export interface ICardActions {
 
 Отвечает за отображение переданного списка карточек каталога.
 
+**Поля:**
+
+- `catalog: HTMLElement[]` — массив DOM-элементов карточек каталога.
+
+**Конструктор:**
+
+```ts
+constructor(container: HTMLElement)
+```
+
+**Сеттеры:**
+
+- `catalog: HTMLElement[]` — устанавливает список карточек и обновляет содержимое галереи.
+
 ### Header.ts
 
 Компонент шапки сайта.
 
 Отображает количество товаров в корзине.
 
-При нажатии на кнопку открытия корзины генерирует событие `basket:open`.
+**Поля:**
 
-Конструктор:
+- `counterElement: HTMLElement` — DOM-элемент счётчика товаров;
+- `basketButton: HTMLButtonElement` — кнопка открытия корзины;
+- `events: IEvents` — объект для генерации событий.
+
+**Конструктор:**
 
 ```ts
 constructor(container: HTMLElement, events: IEvents)
 ```
+
+**Сеттеры:**
+
+- `counter: number` — устанавливает количество товаров в корзине.
+
+При нажатии на кнопку открытия корзины генерирует событие `basket:open`.
 
 ### BasketItem.ts
 
@@ -475,13 +616,22 @@ constructor(container: HTMLElement, events: IEvents)
 
 Отображает название, цену, порядковый номер и кнопку удаления товара.
 
-При нажатии на кнопку удаления генерирует событие `basket:delete`, передавая идентификатор товара.
+**Поля:**
 
-Конструктор:
+- `indexElement: HTMLElement` — DOM-элемент порядкового номера;
+- `deleteButton: HTMLButtonElement` — кнопка удаления товара.
+
+**Конструктор:**
 
 ```ts
-constructor(container: HTMLElement, events: IEvents, productId: string)
+constructor(container: HTMLElement, actions?: ICardActions)
 ```
+
+**Сеттеры:**
+
+- `index: number` — устанавливает порядковый номер товара.
+
+При нажатии на кнопку удаления вызывается переданный обработчик `actions.onClick`. В `main.ts` этот обработчик генерирует событие `basket:delete`, передавая объект товара типа `IProduct`.
 
 ### BasketView.ts
 
@@ -493,13 +643,25 @@ constructor(container: HTMLElement, events: IEvents, productId: string)
 - отображение общей стоимости;
 - управление доступностью кнопки оформления заказа.
 
-При нажатии на кнопку оформления заказа генерирует событие `basket:order`.
+**Поля:**
 
-Конструктор:
+- `items: HTMLElement[]` — массив DOM-элементов товаров корзины;
+- `total: number` — общая стоимость товаров;
+- `orderDisabled: boolean` — состояние доступности кнопки оформления заказа.
+
+**Конструктор:**
 
 ```ts
 constructor(container: HTMLElement, events: IEvents)
 ```
+
+**Сеттеры:**
+
+- `items: HTMLElement[]` — устанавливает список товаров в корзине;
+- `total: number` — устанавливает общую стоимость товаров;
+- `orderDisabled: boolean` — управляет доступностью кнопки оформления заказа.
+
+При нажатии на кнопку оформления заказа генерирует событие `basket:order`.
 
 ### Modal.ts
 
@@ -507,18 +669,27 @@ constructor(container: HTMLElement, events: IEvents)
 
 Отвечает за отображение и закрытие модального окна.
 
-Основные методы:
+**Поля:**
 
-- `open()` — открывает модальное окно;
-- `close()` — закрывает модальное окно.
+- `closeButton: HTMLButtonElement` — кнопка закрытия модального окна;
+- `contentElement: HTMLElement` — DOM-элемент содержимого модального окна.
 
-Модальное окно закрывается при нажатии на кнопку закрытия, нажатии на область фона за пределами содержимого или клавишу Escape.
-
-Конструктор:
+**Конструктор:**
 
 ```ts
 constructor(container: HTMLElement)
 ```
+
+**Сеттеры:**
+
+- `content: HTMLElement` — устанавливает содержимое модального окна.
+
+**Методы:**
+
+- `open(): void` — открывает модальное окно;
+- `close(): void` — закрывает модальное окно.
+
+Модальное окно закрывается при нажатии на кнопку закрытия, нажатии на область фона за пределами содержимого или клавишу Escape.
 
 ### Form.ts
 
@@ -530,23 +701,51 @@ constructor(container: HTMLElement)
 - управление доступностью кнопки отправки;
 - отображение ошибок валидации.
 
+**Поля:**
+
+- `submitButton: HTMLButtonElement` — кнопка отправки формы;
+- `errorsElement: HTMLElement` — DOM-элемент для отображения ошибок.
+
+**Конструктор:**
+
+```ts
+constructor(container: HTMLFormElement, onSubmit: () => void)
+```
+
+**Сеттеры:**
+
+- `valid: boolean` — управляет доступностью кнопки отправки формы;
+- `errors: string` — устанавливает текст ошибок валидации.
+
 ### OrderForm.ts
 
 Компонент первой формы оформления заказа.
 
 Отображает способы оплаты и поле для ввода адреса доставки.
 
-Генерирует события:
+**Поля:**
 
-- `order:payment-change` — изменён способ оплаты;
-- `order:address-change` — изменён адрес доставки;
-- `order:submit` — отправлена первая форма.
+- `events: IEvents` — объект для генерации событий;
+- `cardButton: HTMLButtonElement` — кнопка выбора оплаты картой;
+- `cashButton: HTMLButtonElement` — кнопка выбора оплаты наличными;
+- `addressInput: HTMLInputElement` — поле ввода адреса доставки.
 
-Конструктор:
+**Конструктор:**
 
 ```ts
 constructor(events: IEvents, container: HTMLFormElement)
 ```
+
+**Сеттеры:**
+
+- `address: string` — устанавливает адрес доставки;
+- `payment: TPayment | ''` — устанавливает выбранный способ оплаты.
+
+**Генерируемые события:**
+
+- `order:payment-change` — изменён способ оплаты. Передаёт объект `{ payment: TPayment }`;
+- `order:address-change` — изменён адрес доставки. Передаёт объект `{ address: string }`;
+- `order:submit` — отправлена первая форма.
 
 ### ContactsForm.ts
 
@@ -554,17 +753,28 @@ constructor(events: IEvents, container: HTMLFormElement)
 
 Содержит поля для ввода email и телефона.
 
-Генерирует события:
+**Поля:**
 
-- `contacts:email-change` — изменён email;
-- `contacts:phone-change` — изменён телефон;
-- `contacts:submit` — отправлена форма контактных данных.
+- `events: IEvents` — объект для генерации событий;
+- `emailInput: HTMLInputElement` — поле ввода электронной почты;
+- `phoneInput: HTMLInputElement` — поле ввода телефона.
 
-Конструктор:
+**Конструктор:**
 
 ```ts
 constructor(events: IEvents, container: HTMLFormElement)
 ```
+
+**Сеттеры:**
+
+- `email: string` — устанавливает email покупателя;
+- `phone: string` — устанавливает номер телефона покупателя.
+
+**Генерируемые события:**
+
+- `contacts:email-change` — изменён email. Передаёт объект `{ email: string }`;
+- `contacts:phone-change` — изменён телефон. Передаёт объект `{ phone: string }`;
+- `contacts:submit` — отправлена форма контактных данных.
 
 ### Success.ts
 
@@ -572,13 +782,24 @@ constructor(events: IEvents, container: HTMLFormElement)
 
 Отображает сообщение об успешном оформлении заказа и итоговую сумму.
 
-При нажатии на кнопку закрытия генерирует событие `success:close`.
+**Поля:**
 
-Конструктор:
+- `descriptionElement: HTMLElement` — DOM-элемент с информацией о результате заказа;
+- `closeButton: HTMLButtonElement` — кнопка закрытия окна;
+- `events: IEvents` — объект для генерации событий.
+
+**Конструктор:**
 
 ```ts
 constructor(container: HTMLElement, events: IEvents)
 ```
+
+**Сеттеры:**
+
+- `total: number` — устанавливает итоговую сумму заказа.
+
+При нажатии на кнопку закрытия генерирует событие `success:close`.
+
 ## События приложения
 
 Для взаимодействия между моделями данных, компонентами представления и Presenter используется событийная модель на основе класса `EventEmitter`.
@@ -601,20 +822,75 @@ constructor(container: HTMLElement, events: IEvents)
 
 ### События представлений
 
-| Событие | Компонент | Описание |
+| Событие | Компонент | Описание и передаваемые данные |
 |---|---|---|
-| `card:select` | `CardCatalog` | Выбор карточки товара в каталоге |
+| `card:select` | `CardCatalog` | Выбор карточки товара. В Presenter передаётся объект `IProduct` |
 | `preview:button-click` | `CardPreview` | Нажатие на кнопку добавления или удаления товара из корзины |
 | `basket:open` | `Header` | Нажатие на кнопку открытия корзины |
-| `basket:delete` | `BasketItem` | Нажатие на кнопку удаления товара из корзины. Передаёт `productId` |
+| `basket:delete` | `BasketItem` | Нажатие на кнопку удаления товара. В Presenter передаётся объект `IProduct` |
 | `basket:order` | `BasketView` | Нажатие на кнопку оформления заказа |
-| `order:payment-change` | `OrderForm` | Изменение способа оплаты. Передаёт `payment` |
-| `order:address-change` | `OrderForm` | Изменение адреса доставки. Передаёт `address` |
+| `order:payment-change` | `OrderForm` | Изменение способа оплаты. Передаёт `{ payment: TPayment }` |
+| `order:address-change` | `OrderForm` | Изменение адреса доставки. Передаёт `{ address: string }` |
 | `order:submit` | `OrderForm` | Отправка первой формы оформления заказа |
-| `contacts:email-change` | `ContactsForm` | Изменение email. Передаёт `email` |
-| `contacts:phone-change` | `ContactsForm` | Изменение телефона. Передаёт `phone` |
+| `contacts:email-change` | `ContactsForm` | Изменение email. Передаёт `{ email: string }` |
+| `contacts:phone-change` | `ContactsForm` | Изменение телефона. Передаёт `{ phone: string }` |
 | `contacts:submit` | `ContactsForm` | Отправка формы контактных данных |
 | `success:close` | `Success` | Нажатие на кнопку закрытия окна успешного оформления заказа |
+
+## Презентер (Presenter)
+
+Презентер реализован в файле `src/main.ts`.
+
+В проекте используется событийный подход: Presenter подписывается на события через `EventEmitter`, получает данные из моделей и передаёт их компонентам представления. Компоненты View сообщают о действиях пользователя через события, а Presenter обрабатывает их и вызывает необходимые методы моделей.
+
+### Основные функции Presenter
+
+**`renderCatalog(): void`**
+
+- Получает список товаров через `catalog.getProducts()`.
+- Создаёт карточки каталога `CardCatalog`.
+- Передаёт карточкам данные о названии, цене, категории и изображении.
+- Устанавливает созданные карточки в галерею через `gallery.catalog`.
+
+**`renderBasket(): void`**
+
+- Получает товары корзины через `basket.getProducts()`.
+- Создаёт элементы корзины `BasketItem`.
+- Передаёт каждому элементу название, цену и порядковый номер.
+- Обновляет отображение корзины через `basketView.render()`.
+- Передаёт общую стоимость и состояние доступности кнопки оформления заказа.
+
+**`openBasket(): void`**
+
+- Отображает корзину в модальном окне.
+- Открывает модальное окно через `modal.open()`.
+
+**`openOrder(): void`**
+
+- Отображает первую форму оформления заказа.
+- Открывает модальное окно.
+
+**`openContacts(): void`**
+
+- Отображает форму контактных данных.
+- Открывает модальное окно.
+
+**`updateForms(): void`**
+
+- Получает данные покупателя через `buyer.getBuyerData()`.
+- Проверяет обязательные поля через `buyer.validateBuyerData()`.
+- Формирует сообщения об ошибках для каждой формы.
+- Обновляет значения полей, состояние кнопок отправки и сообщения об ошибках.
+
+**`submitOrder(): Promise<void>`**
+
+- Проверяет данные покупателя.
+- Получает актуальные данные покупателя и товары корзины.
+- Формирует объект заказа типа `IOrder`.
+- Отправляет заказ через `apiService.createOrder(order)`.
+- При успешном ответе очищает корзину и данные покупателя.
+- Отображает окно успешного оформления заказа.
+- При ошибке выводит сообщение о невозможности оформить заказ.
 
 ### Обработка событий в Presenter
 
@@ -622,22 +898,22 @@ Presenter подписывается на события через `EventEmitte
 
 | Событие | Действие Presenter |
 |---|---|
-| `catalog:changed` | Получает список товаров через `catalog.getProducts()` и обновляет каталог |
-| `preview:changed` | Получает выбранный товар через `catalog.getChosenProduct()` и обновляет окно предварительного просмотра |
-| `basket:changed` | Получает актуальное содержимое корзины, обновляет её отображение и счётчик товаров в шапке сайта |
-| `buyer:changed` | Получает данные покупателя, выполняет проверку обязательных полей и обновляет формы |
-| `card:select` | Вызывает `openPreview()` для открытия предварительного просмотра выбранного товара |
+| `catalog:changed` | Вызывает `renderCatalog()`, получает список товаров через `catalog.getProducts()` и обновляет каталог |
+| `preview:changed` | Получает выбранный товар через `catalog.getChosenProduct()`, формирует данные карточки предварительного просмотра и открывает модальное окно |
+| `basket:changed` | Обновляет счётчик товаров в шапке и отображение корзины через `renderBasket()` |
+| `buyer:changed` | Вызывает `updateForms()`, проверяет данные покупателя и обновляет формы |
+| `card:select` | Передаёт выбранный товар в `catalog.chooseProduct(product)`, после чего модель генерирует `preview:changed` |
 | `preview:button-click` | Добавляет товар в корзину или удаляет его из неё |
 | `basket:open` | Вызывает `openBasket()` для открытия корзины |
-| `basket:delete` | Удаляет товар из корзины по переданному `productId` |
+| `basket:delete` | Получает объект `IProduct` и удаляет товар через `basket.removeProduct(product.id)` |
 | `basket:order` | Вызывает `openOrder()` для перехода к первой форме оформления заказа |
-| `order:payment-change` | Обновляет способ оплаты в `BuyerModel` |
+| `order:payment-change` | Обновляет способ оплаты в `BuyerModel` через `buyer.updateBuyerData()` |
 | `order:address-change` | Обновляет адрес доставки в `BuyerModel` |
 | `order:submit` | Вызывает `openContacts()` для перехода к форме контактных данных |
 | `contacts:email-change` | Обновляет email в `BuyerModel` |
 | `contacts:phone-change` | Обновляет телефон в `BuyerModel` |
 | `contacts:submit` | Запускает отправку заказа методом `submitOrder()` |
-| `success:close` | Закрывает модальное окно |
+| `success:close` | Закрывает модальное окно через `modal.close()` |
 
 ### Передача данных через события
 
@@ -645,4 +921,30 @@ Presenter подписывается на события через `EventEmitte
 
 После получения таких событий Presenter обращается к соответствующей модели и получает актуальные данные через её методы.
 
-События представлений могут передавать дополнительные данные, необходимые для обработки действий пользователя. Например, событие `basket:delete` передаёт идентификатор товара `productId`, а события изменения полей форм передают соответствующие значения.
+События представлений могут передавать дополнительные данные, необходимые для обработки действий пользователя.
+
+Например:
+
+- `card:select` передаёт объект товара типа `IProduct`;
+- `basket:delete` передаёт объект товара типа `IProduct`, после чего Presenter использует его `id` для удаления;
+- `order:payment-change` передаёт объект `{ payment: TPayment }`;
+- `order:address-change` передаёт объект `{ address: string }`;
+- `contacts:email-change` передаёт объект `{ email: string }`;
+- `contacts:phone-change` передаёт объект `{ phone: string }`.
+
+### Первоначальная инициализация приложения
+
+При запуске приложения в `src/main.ts` выполняются следующие действия:
+
+1. Создаётся экземпляр `EventEmitter`.
+2. Создаются модели `CatalogModel`, `BasketModel` и `BuyerModel`.
+3. Создаются экземпляры `Api` и `ApiService`.
+4. Получаются основные DOM-элементы страницы.
+5. Создаются компоненты представления: `Gallery`, `Header`, `Modal`, `CardPreview`, `BasketView`, `OrderForm`, `ContactsForm` и `Success`.
+6. Выполняется начальная очистка корзины и данных покупателя.
+7. Устанавливается начальное значение счётчика товаров в шапке.
+8. Отображается пустая корзина через `renderBasket()`.
+9. Через `apiService.getProducts()` загружается каталог товаров с сервера.
+10. После успешной загрузки товары сохраняются в `CatalogModel` методом `catalog.saveProducts()`, который генерирует событие `catalog:changed`. Presenter обрабатывает это событие и отображает каталог.
+
+Таким образом, `main.ts` связывает модели и компоненты представления, обрабатывает события приложения и управляет последовательностью действий пользователя.
